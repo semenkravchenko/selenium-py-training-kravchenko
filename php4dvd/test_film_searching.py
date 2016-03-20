@@ -17,10 +17,13 @@ class Search(unittest.TestCase):
 
     def test_existed_film_local_searching(self):
 
+        class NotExistedFilmException(Exception): pass
+
         search_target = u"Криминальное чтиво"
 
         driver = self.driver
         driver.get(self.base_url + "/php4dvd/")
+        driver.implicitly_wait(3)
 
         #login
         driver.find_element_by_id("username").clear()
@@ -37,6 +40,9 @@ class Search(unittest.TestCase):
         time.sleep(1)
 
         all_films = driver.find_elements_by_class_name("title")
+
+        if len(all_films) == 0:
+            raise NotExistedFilmException("Film was not found")
 
         for film in all_films:
 
@@ -72,11 +78,12 @@ class Search(unittest.TestCase):
 
         all_films = driver.find_elements_by_class_name("title")
 
-        for film in all_films:
+        if len(all_films) > 0:
+            for film in all_films:
 
-            if film.get_attribute("textContent") == search_target:
-                print "We have found film with title: ", film.get_attribute("textContent")
-                raise NotExistedFilmException("We have found not existed film")
+                if film.get_attribute("textContent") == search_target:
+                    print "We have found film with title: ", film.get_attribute("textContent")
+                    raise NotExistedFilmException("We have found not existed film")
 
         driver.find_element_by_link_text("Home").click()
 
