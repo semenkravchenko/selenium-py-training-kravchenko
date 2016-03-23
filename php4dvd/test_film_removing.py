@@ -5,6 +5,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.expected_conditions import *
 import unittest, time, re
 
 class Removing(unittest.TestCase):
@@ -15,56 +17,14 @@ class Removing(unittest.TestCase):
         self.verificationErrors = []
         self.accept_next_alert = True
 
-    def test_removing_film_description(self):
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
-
-        driver.find_element_by_class_name("movie_box").click()
-        driver.find_element_by_css_selector("img[alt=\"Edit\"]").click()
-
-        driver.find_element_by_name("imdbid").clear()
-        driver.find_element_by_name("name").clear()
-        driver.find_element_by_name("year").clear()
-        driver.find_element_by_name("duration").clear()
-        driver.find_element_by_name("rating").clear()
-        driver.find_element_by_id("formats").clear()
-        driver.find_element_by_id("text_languages_0").clear()
-
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("name").send_keys("Title")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("year").send_keys("not a number")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("year").clear()
-        driver.find_element_by_name("year").send_keys("-1")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("year").clear()
-        driver.find_element_by_name("year").send_keys("0")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("duration").clear()
-        driver.find_element_by_name("duration").send_keys("-10")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("duration").clear()
-        driver.find_element_by_name("duration").send_keys("13")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_name("rating").clear()
-        driver.find_element_by_name("rating").send_keys("-1")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_id("formats").clear()
-        driver.find_element_by_id("formats").send_keys("VHS")
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_link_text("Home").click()
-
     def test_film_removing(self):
+
+        class SmthWentWrongException(Exception):pass
+
         driver = self.driver
         driver.get(self.base_url + "/php4dvd/")
+
+        wait = WebDriverWait(self.driver, 3)
 
         #login
         driver.find_element_by_id("username").clear()
@@ -72,10 +32,19 @@ class Removing(unittest.TestCase):
         driver.find_element_by_name("password").clear()
         driver.find_element_by_name("password").send_keys("admin")
         driver.find_element_by_name("submit").click()
+
+        films_before_remove = driver.find_elements_by_class_name("title")
 
         driver.find_element_by_class_name("movie_box").click()
         driver.find_element_by_css_selector("img[alt=\"Remove\"]").click()
         driver.switch_to.alert.accept()
+
+        wait.until(visibility_of_element_located((By.CLASS_NAME, "movie_box")))
+
+        films_after_remove = driver.find_elements_by_class_name("title")
+
+        if films_before_remove == films_after_remove:
+            raise SmthWentWrongException("films_before_remove list == films_after_remove list")
 
     def is_element_present(self, how, what):
         try: self.driver.find_element(by=how, value=what)
