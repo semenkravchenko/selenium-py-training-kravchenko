@@ -42,9 +42,8 @@ class Search(unittest.TestCase):
         searchbox.send_keys(search_target)
         searchbox.send_keys(Keys.ENTER)
 
-        wait.until(invisibility_of_element_located((By.NAME, random_film)))
-
-        time.sleep(1)
+        wait.until(staleness_of(random_film))
+        wait.until(visibility_of_element_located((By.CLASS_NAME, "title")))
 
         films_after_search = driver.find_elements_by_class_name("title")
 
@@ -84,9 +83,8 @@ class Search(unittest.TestCase):
         searchbox.send_keys(search_target)
         searchbox.send_keys(Keys.ENTER)
 
-        wait.until(invisibility_of_element_located((By.NAME, random_film)))
-
-        time.sleep(1)
+        wait.until(staleness_of(random_film))
+        wait.until(visibility_of_element_located((By.XPATH, "//*[contains(text(), 'No movies where found')]")))
 
         films_after_search = driver.find_elements_by_class_name("title")
 
