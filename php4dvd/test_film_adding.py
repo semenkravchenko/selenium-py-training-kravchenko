@@ -5,6 +5,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support.expected_conditions import *
 import unittest, time, re
 
 class Adding(unittest.TestCase):
@@ -15,12 +17,16 @@ class Adding(unittest.TestCase):
         self.verificationErrors = []
         self.accept_next_alert = True
 
-    def EXCLUDED_test_film_adding_imdb_search(self):
+    def test_film_adding_imdb_search(self):
+        class SmthWentWrongException(Exception):pass
 
         search_target_string = u"Криминальное чтиво"
 
+        wait = WebDriverWait(self.driver, 3)
+
         driver = self.driver
         driver.get(self.base_url + "/php4dvd/")
+        driver.implicitly_wait(5)
 
         #login
         driver.find_element_by_id("username").clear()
@@ -30,16 +36,23 @@ class Adding(unittest.TestCase):
         driver.find_element_by_name("submit").click()
 
         #film adding
+        films_before_adding = driver.find_elements_by_class_name("title")
+
         driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
         driver.find_element_by_id("imdbsearch").clear()
         driver.find_element_by_id("imdbsearch").send_keys(search_target_string)
         driver.find_element_by_css_selector("input[type=\"submit\"]").click()
 
-        time.sleep(1)
+        wait.until(visibility_of_element_located((By.CLASS_NAME, "title")))
 
         driver.find_element_by_link_text(search_target_string).click()
         driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
         driver.find_element_by_link_text("Home").click()
+
+        films_after_adding = driver.find_elements_by_class_name("title")
+
+        if films_before_adding == films_after_adding:
+            raise SmthWentWrongException("films_before_adding list == films_after_adding list")
 
         time.sleep(1)
 
