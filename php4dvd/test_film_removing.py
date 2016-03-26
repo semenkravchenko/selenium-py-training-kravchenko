@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.expected_conditions import *
 import unittest, time, re
@@ -43,7 +39,7 @@ class Removing(unittest.TestCase):
 
         films_after_remove = driver.find_elements_by_class_name("title")
 
-        if films_before_remove == films_after_remove:
+        if len(films_before_remove) == len(films_after_remove):
             raise SmthWentWrongException("films_before_remove list == films_after_remove list")
 
     def is_element_present(self, how, what):

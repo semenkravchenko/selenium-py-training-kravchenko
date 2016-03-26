@@ -2,12 +2,10 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support.expected_conditions import *
-import unittest, time, re
+#from selenium_fixture import driver
+import unittest, time
 
 class Adding(unittest.TestCase):
     def setUp(self):
@@ -51,7 +49,7 @@ class Adding(unittest.TestCase):
 
         films_after_adding = driver.find_elements_by_class_name("title")
 
-        if films_before_adding == films_after_adding:
+        if len(films_before_adding) == len(films_after_adding):
             raise SmthWentWrongException("films_before_adding list == films_after_adding list")
 
         time.sleep(1)
@@ -290,6 +288,7 @@ class Adding(unittest.TestCase):
     def test_film_adding_full_data(self):
 
         class BadRequiredFieldException(Exception):pass
+        class SmthWentWrongException(Exception):pass
 
         driver = self.driver
         driver.get(self.base_url + "/php4dvd/")
@@ -301,6 +300,8 @@ class Adding(unittest.TestCase):
         driver.find_element_by_name("password").clear()
         driver.find_element_by_name("password").send_keys("admin")
         driver.find_element_by_name("submit").click()
+
+        films_before_adding = driver.find_elements_by_class_name("title")
 
         #film adding
         driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
@@ -402,6 +403,11 @@ class Adding(unittest.TestCase):
 
         driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
         driver.find_element_by_link_text("Home").click()
+
+        films_after_adding = driver.find_elements_by_class_name("title")
+
+        if len(films_before_adding) == len(films_after_adding):
+            raise SmthWentWrongException("films_before_adding list == films_after_adding list")
 
         time.sleep(1)
 
