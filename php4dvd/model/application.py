@@ -2,6 +2,7 @@ from php4dvd.model.user import User
 from php4dvd.pages.internal_page import InternalPage
 from php4dvd.pages.login_page import LoginPage
 from php4dvd.pages.film_add_page import FilmAddPage
+from php4dvd.pages.film_info_page import FilmInfoPage
 from php4dvd.pages.user_management_page import UserManagementPage
 from php4dvd.pages.user_profile_page import UserProfilePage
 from php4dvd.pages.imdb_search_result_page import ImdbSearchResultPage
@@ -20,6 +21,7 @@ class Application(object):
         self.user_profile_page = UserProfilePage(driver, base_url)
         self.user_management_page = UserManagementPage(driver, base_url)
         self.film_add_page = FilmAddPage(driver, base_url)
+        self.film_info_page = FilmInfoPage(driver, base_url)
         self.imdb_search_result_page = ImdbSearchResultPage(driver, base_url)
 
     def logout(self):
@@ -129,6 +131,7 @@ class Application(object):
         # ip.is_element_visible((By.CLASS_NAME, "title"))
 
         fap.home_return()
+        ip.is_this_page
 
     def home_return_call(self):
         ip = self.internal_page
@@ -141,6 +144,18 @@ class Application(object):
             raise SmthWentWrongException("Film list was not changed")
         else:
             return True
+
+    def remove_film(self):
+        ip = self.internal_page
+        fip = self.film_info_page
+
+        ip.click_at_the_class_name_element("title")
+        fip.is_this_page
+
+        fip.remove_button.click()
+        fip.accept_to_the_next_alert()
+
+        ip.is_this_page
 
 
 

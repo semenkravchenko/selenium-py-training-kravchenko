@@ -17,11 +17,17 @@ class Page(object):
         except WebDriverException:
             return False
 
+    def accept_to_the_next_alert(self):
+        self.driver.switch_to.alert.accept()
+
     # def click_at_the_element(self, locator):
     #     self.driver.find_element(locator).click()
 
     def click_at_the_link_text_element(self, input_string):
         self.driver.find_element_by_link_text(input_string).click()
+
+    def click_at_the_class_name_element(self, input_class):
+        self.driver.find_element_by_class_name(input_class).click()
 
     def home_return(self):
         self.home_link.click()
