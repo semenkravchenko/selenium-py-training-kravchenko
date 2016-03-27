@@ -1,440 +1,160 @@
 # -*- coding: utf-8 -*-
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.wait import WebDriverWait
-from selenium.webdriver.support.expected_conditions import *
-#from selenium_fixture import driver
-import unittest, time
+from model.user import User
+import unittest
 
-class Adding(unittest.TestCase):
-    def setUp(self):
-        self.driver = webdriver.Firefox()
-        self.driver.implicitly_wait(30)
-        self.base_url = "http://localhost"
-        self.verificationErrors = []
-        self.accept_next_alert = True
+def test_film_adding_imdb_search(app):
 
-    def test_film_adding_imdb_search(self):
-        class SmthWentWrongException(Exception):pass
+    search_target_string = u"Криминальное чтиво"
 
-        search_target_string = u"Криминальное чтиво"
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
 
-        wait = WebDriverWait(self.driver, 3)
+    films_before_adding = app.get_films_on_page()
 
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(5)
+    app.open_add_film_form()
+    app.search_and_add_film_from_imdb(search_target_string)
 
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
+    films_after_adding = app.get_films_on_page()
 
-        #film adding
-        films_before_adding = driver.find_elements_by_class_name("title")
+    app.is_film_list_changed(films_before_adding, films_after_adding)
 
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
-        driver.find_element_by_id("imdbsearch").clear()
-        driver.find_element_by_id("imdbsearch").send_keys(search_target_string)
-        driver.find_element_by_css_selector("input[type=\"submit\"]").click()
+    app.logout()
+    assert app.is_not_logged_in()
 
-        wait.until(visibility_of_element_located((By.CLASS_NAME, "title")))
+def test_film_adding_imbdid_field(app):
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
 
-        driver.find_element_by_link_text(search_target_string).click()
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_link_text("Home").click()
+    app.open_add_film_form()
 
-        films_after_adding = driver.find_elements_by_class_name("title")
+    app.is_field_works(element="imdbid", keys="666", required_class="digits")
+    app.is_field_works(element="imdbid", keys="-1", required_class="digits error")
+    app.is_field_works(element="imdbid", keys="not a number", required_class="digits error")
+    app.is_field_works(element="imdbid", keys="", required_class="digits")
 
-        if len(films_before_adding) == len(films_after_adding):
-            raise SmthWentWrongException("films_before_adding list == films_after_adding list")
+    app.logout()
+    assert app.is_not_logged_in()
 
-        time.sleep(1)
+def test_film_adding_name_field(app):
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
 
-    def sender(self, element, keys):
-        element.clear()
-        element.send_keys(keys)
-        element.send_keys(Keys.TAB)
+    app.open_add_film_form()
 
-    def test_film_adding_imbdid_field(self):
+    app.is_field_works(element="name", keys="13", required_class="required")
+    app.is_field_works(element="name", keys="-1", required_class="required")
+    app.is_field_works(element="name", keys="some name", required_class="required")
+    app.is_field_works(element="name", keys="", required_class="required error")
+    app.is_field_works(element="name", keys="!@#$%^&*()", required_class="required")
 
-        class BadRequiredFieldException(Exception):pass
+    app.logout()
+    assert app.is_not_logged_in()
 
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(3)
+def test_film_adding_year_field(app):
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
 
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
+    app.open_add_film_form()
 
-        #film adding
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
+    app.is_field_works(element="year", keys="1937", required_class="required digits")
+    app.is_field_works(element="year", keys="-1", required_class="required digits error")
+    app.is_field_works(element="year", keys="not a number", required_class="required digits error")
+    app.is_field_works(element="year", keys="", required_class="required digits error")
 
-        imbdid = driver.find_element_by_name("imdbid")
+    app.logout()
+    assert app.is_not_logged_in()
 
-        #case 1
-        self.sender(imbdid, "666")
+def test_film_adding_duration_field(app):
 
-        if str(imbdid.get_attribute("class")) != "digits":
-            raise BadRequiredFieldException("Required field \"imbdid\" was filled bad")
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
 
-        #case 2
-        self.sender(imbdid, "-1")
+    app.open_add_film_form()
 
-        if str(imbdid.get_attribute("class")) == "digits":
-            raise BadRequiredFieldException("Required field \"imbdid\" was filled bad")
+    app.is_field_works(element="duration", keys="13", required_class="digits")
+    app.is_field_works(element="duration", keys="-1", required_class="digits error")
+    app.is_field_works(element="duration", keys="not a number", required_class="digits error")
+    app.is_field_works(element="duration", keys="", required_class="digits")
 
-        #case 3
-        self.sender(imbdid, "not a number")
+    app.logout()
+    assert app.is_not_logged_in()
 
-        if str(imbdid.get_attribute("class")) == "digits":
-            raise BadRequiredFieldException("Required field \"imbdid\" was filled bad")
+def test_film_adding_rating_field(app):
 
-        #case 4
-        self.sender(imbdid, "")
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
 
-        if str(imbdid.get_attribute("class")) != "digits":
-            raise BadRequiredFieldException("Required field \"imbdid\" was filled bad")
+    app.open_add_film_form()
 
-    def test_film_adding_year_field(self):
+    app.is_field_works(element="rating", keys="13", required_class="number")
+    app.is_field_works(element="rating", keys="-1", required_class="number")
+    app.is_field_works(element="rating", keys="not a number", required_class="number error")
+    app.is_field_works(element="rating", keys="", required_class="number")
 
-        class BadRequiredFieldException(Exception):pass
+    app.logout()
+    assert app.is_not_logged_in()
 
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(3)
-
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
-
-        #film adding
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
-
-        year = driver.find_element_by_name("year")
-
-        #case 1
-        self.sender(year, "666")
-
-        if str(year.get_attribute("class")) != "required digits":
-            raise BadRequiredFieldException("Required field \"year\" was filled bad")
-
-        #case 2
-        self.sender(year, "-1")
-
-        if str(year.get_attribute("class")) == "required digits":
-            raise BadRequiredFieldException("Required field \"year\" was filled bad")
-
-        #case 3
-        self.sender(year, "not a number")
-
-        if str(year.get_attribute("class")) == "required digits":
-            raise BadRequiredFieldException("Required field \"year\" was filled bad")
-
-        #case 4
-        self.sender(year, "")
-
-        if str(year.get_attribute("class")) != "required digits error":
-            raise BadRequiredFieldException("Required field \"year\" was filled bad")
-
-    def test_film_adding_duration_field(self):
-
-        class BadRequiredFieldException(Exception):pass
-
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(3)
-
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
-
-        #film adding
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
-
-        duration = driver.find_element_by_name("duration")
-
-        #case 1
-        self.sender(duration, "666")
-
-        if str(duration.get_attribute("class")) != "digits":
-            raise BadRequiredFieldException("Required field \"duration\" was filled bad")
-
-        #case 2
-        self.sender(duration, "-1")
-
-        if str(duration.get_attribute("class")) == "digits":
-            raise BadRequiredFieldException("Required field \"duration\" was filled bad")
-
-        #case 3
-        self.sender(duration, "not a number")
-
-        if str(duration.get_attribute("class")) == "digits":
-            raise BadRequiredFieldException("Required field \"duration\" was filled bad")
-
-        #case 4
-        self.sender(duration, "")
-
-        if str(duration.get_attribute("class")) != "digits":
-            raise BadRequiredFieldException("Required field \"duration\" was filled bad")
-
-    def test_film_adding_rating_field(self):
-
-        class BadRequiredFieldException(Exception):pass
-
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(3)
-
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
-
-        #film adding
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
-
-        rating = driver.find_element_by_name("rating")
-
-        #case 1
-        self.sender(rating, "666")
-
-        if str(rating.get_attribute("class")) != "number":
-            raise BadRequiredFieldException("Required field \"rating\" was filled bad")
-
-        #case 2
-        self.sender(rating, "-1")
-
-        if str(rating.get_attribute("class")) != "number":
-            raise BadRequiredFieldException("Required field \"rating\" was filled bad")
-
-        #case 3
-        self.sender(rating, "not a number")
-
-        if str(rating.get_attribute("class")) == "number":
-            raise BadRequiredFieldException("Required field \"rating\" was filled bad")
-
-        #case 4
-        self.sender(rating, "")
-
-        if str(rating.get_attribute("class")) != "number":
-            raise BadRequiredFieldException("Required field \"rating\" was filled bad")
-
-    def test_film_adding_trailer_field(self):
-
-        class BadRequiredFieldException(Exception):pass
-
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(3)
-
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
-
-        #film adding
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
-
-        trailer = driver.find_element_by_name("trailer")
-
-        #case 1
-        self.sender(trailer, "666")
-
-        if str(trailer.get_attribute("class")) == "url":
-            raise BadRequiredFieldException("Required field \"trailer\" was filled bad")
-
-        #case 2
-        self.sender(trailer, "-1")
-
-        if str(trailer.get_attribute("class")) == "url":
-            raise BadRequiredFieldException("Required field \"trailer\" was filled bad")
-
-        #case 3
-        self.sender(trailer, "some text")
-
-        if str(trailer.get_attribute("class")) == "url":
-            raise BadRequiredFieldException("Required field \"trailer\" was filled bad")
-
-        #case 4
-        self.sender(trailer, "")
-
-        if str(trailer.get_attribute("class")) != "url":
-            raise BadRequiredFieldException("Required field \"trailer\" was filled bad")
-
-        #case 5
-        self.sender(trailer, "http://www.ru")
-
-        if str(trailer.get_attribute("class")) != "url":
-            raise BadRequiredFieldException("Required field \"trailer\" was filled bad")
-
-    def test_film_adding_full_data(self):
-
-        class BadRequiredFieldException(Exception):pass
-        class SmthWentWrongException(Exception):pass
-
-        driver = self.driver
-        driver.get(self.base_url + "/php4dvd/")
-        driver.implicitly_wait(3)
-
-        #login
-        driver.find_element_by_id("username").clear()
-        driver.find_element_by_id("username").send_keys("admin")
-        driver.find_element_by_name("password").clear()
-        driver.find_element_by_name("password").send_keys("admin")
-        driver.find_element_by_name("submit").click()
-
-        films_before_adding = driver.find_elements_by_class_name("title")
-
-        #film adding
-        driver.find_element_by_css_selector("img[alt=\"Add movie\"]").click()
-
-        imbdid = driver.find_element_by_name("imdbid")
-
-        self.sender(imbdid, "666")
-
-        if str(imbdid.get_attribute("class")) != "digits":
-            raise BadRequiredFieldException("Required field \"imbdid\" was filled bad")
-
-        name = driver.find_element_by_name("name")
-
-        self.sender(name, "Test Film Full Data")
-
-        aka = driver.find_element_by_name("aka")
-
-        self.sender(aka, "Scary Test Film Full Data")
-
-        year = driver.find_element_by_name("year")
-
-        self.sender(year, "1937")
-
-        if str(year.get_attribute("class")) != "required digits":
-            raise BadRequiredFieldException("Required field \"year\" was filled bad")
-
-        duration = driver.find_element_by_name("duration")
-
-        self.sender(duration, "13")
-
-        if str(duration.get_attribute("class")) != "digits":
-            raise BadRequiredFieldException("Required field \"duration\" was filled bad")
-
-        rating = driver.find_element_by_name("rating")
-
-        self.sender(rating, "777")
-
-        if str(rating.get_attribute("class")) != "number":
-            raise BadRequiredFieldException("Required field \"rating\" was filled bad")
-
-        format = driver.find_element_by_name("format")
-
-        self.sender(format, "VHS")
-
-        if str(format.get_attribute("class")) != "required ui-autocomplete-input":
-            raise BadRequiredFieldException("Required field \"format\" was filled bad")
-
-        trailer = driver.find_element_by_name("trailer")
-
-        self.sender(trailer, "http://www.ru")
-
-        if str(trailer.get_attribute("class")) != "url":
-            raise BadRequiredFieldException("Required field \"trailer\" was filled bad")
-
-        driver.find_element_by_name("notes").clear()
-        driver.find_element_by_name("notes").send_keys("Personal notes")
-
-        driver.find_element_by_name("taglines").clear()
-        driver.find_element_by_name("taglines").send_keys("Taglines")
-
-        driver.find_element_by_name("plotoutline").clear()
-        driver.find_element_by_name("plotoutline").send_keys("Plot outline")
-
-        driver.find_element_by_name("plots").clear()
-        driver.find_element_by_name("plots").send_keys("Plots")
-
-        driver.find_element_by_id("text_languages_0").clear()
-        driver.find_element_by_id("text_languages_0").send_keys("Russian")
-
-        driver.find_element_by_name("subtitles").clear()
-        driver.find_element_by_name("subtitles").send_keys("Subtitles")
-
-        driver.find_element_by_name("audio").clear()
-        driver.find_element_by_name("audio").send_keys("Audio")
-
-        driver.find_element_by_name("video").clear()
-        driver.find_element_by_name("video").send_keys("Video")
-
-        driver.find_element_by_name("country").clear()
-        driver.find_element_by_name("country").send_keys("Country")
-
-        driver.find_element_by_name("genres").clear()
-        driver.find_element_by_name("genres").send_keys("Genres")
-
-        driver.find_element_by_name("director").clear()
-        driver.find_element_by_name("director").send_keys("Director")
-
-        driver.find_element_by_name("writer").clear()
-        driver.find_element_by_name("writer").send_keys("Writer")
-
-        driver.find_element_by_name("producer").clear()
-        driver.find_element_by_name("producer").send_keys("Producer")
-
-        driver.find_element_by_name("music").clear()
-        driver.find_element_by_name("music").send_keys("Music")
-
-        driver.find_element_by_name("cast").clear()
-        driver.find_element_by_name("cast").send_keys("Cast")
-
-        driver.find_element_by_css_selector("img[alt=\"Save\"]").click()
-        driver.find_element_by_link_text("Home").click()
-
-        films_after_adding = driver.find_elements_by_class_name("title")
-
-        if len(films_before_adding) == len(films_after_adding):
-            raise SmthWentWrongException("films_before_adding list == films_after_adding list")
-
-        time.sleep(1)
-
-    def is_element_present(self, how, what):
-        try: self.driver.find_element(by=how, value=what)
-        except NoSuchElementException as e: return False
-        return True
-
-    def is_alert_present(self):
-        try: self.driver.switch_to_alert()
-        except NoAlertPresentException as e: return False
-        return True
-
-    def close_alert_and_get_its_text(self):
-        try:
-            alert = self.driver.switch_to_alert()
-            alert_text = alert.text
-            if self.accept_next_alert:
-                alert.accept()
-            else:
-                alert.dismiss()
-            return alert_text
-        finally: self.accept_next_alert = True
-
-    def tearDown(self):
-        self.driver.quit()
-        self.assertEqual([], self.verificationErrors)
+def test_film_adding_trailer_field(app):
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
+
+    app.open_add_film_form()
+
+    app.is_field_works(element="trailer", keys="13", required_class="url error")
+    app.is_field_works(element="trailer", keys="-1", required_class="url error")
+    app.is_field_works(element="trailer", keys="some text", required_class="url error")
+    app.is_field_works(element="trailer", keys="", required_class="url")
+    app.is_field_works(element="trailer", keys="http://www.ru", required_class="url")
+
+    app.logout()
+    assert app.is_not_logged_in()
+
+def test_film_adding_full_data(app):
+    app.ensure_logout()
+    app.login(User.Admin())
+    assert app.is_logged_in()
+
+    app.open_add_film_form()
+    films_before_adding = app.get_films_on_page()
+
+    app.is_field_works(element="imdbid", keys="13", required_class="digits")
+    app.is_field_works(element="name", keys="Seven", required_class="required")
+    app.is_field_works(element="year", keys="1999", required_class="required digits")
+    app.is_field_works(element="duration", keys="777", required_class="digits")
+    app.is_field_works(element="rating", keys="5", required_class="number")
+    app.is_field_works(element="format", keys="VHS", required_class="required ui-autocomplete-input")
+    app.is_field_works(element="aka", keys="aka", required_class=None, is_required=False)
+    app.is_field_works(element="notes", keys="notes", required_class=None, is_required=False)
+    app.is_field_works(element="taglines", keys="taglines", required_class=None, is_required=False)
+    app.is_field_works(element="plotoutline", keys="plotoutline", required_class=None, is_required=False)
+    app.is_field_works(element="plots", keys="plots", required_class=None, is_required=False)
+    app.is_field_works(element="languages", keys="Russian", required_class=None, is_required=False)
+    app.is_field_works(element="subtitles", keys="subtitles", required_class=None, is_required=False)
+    app.is_field_works(element="audio", keys="audio", required_class=None, is_required=False)
+    app.is_field_works(element="video", keys="video", required_class=None, is_required=False)
+    app.is_field_works(element="country", keys="country", required_class=None, is_required=False)
+    app.is_field_works(element="genres", keys="genres", required_class=None, is_required=False)
+    app.is_field_works(element="director", keys="director", required_class=None, is_required=False)
+    app.is_field_works(element="writer", keys="writer", required_class=None, is_required=False)
+    app.is_field_works(element="producer", keys="producer", required_class=None, is_required=False)
+    app.is_field_works(element="music", keys="music", required_class=None, is_required=False)
+    app.is_field_works(element="cast", keys="cast", required_class=None, is_required=False)
+
+    app.home_return_call()
+
+    films_after_adding = app.get_films_on_page()
+
+    app.is_film_list_changed(films_before_adding, films_after_adding)
+
+    app.logout()
+    assert app.is_not_logged_in()
 
 if __name__ == "__main__":
     unittest.main()
