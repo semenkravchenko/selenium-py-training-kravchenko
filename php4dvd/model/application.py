@@ -127,9 +127,6 @@ class Application(object):
         fap.is_element_visible((By.CSS_SELECTOR, "img[alt=\"Save\"]"))
         fap.submit_search_button.click()
 
-        # fap.home_link.click()
-        # ip.is_element_visible((By.CLASS_NAME, "title"))
-
         fap.home_return()
         ip.is_this_page
 
@@ -156,6 +153,51 @@ class Application(object):
         fip.accept_to_the_next_alert()
 
         ip.is_this_page
+
+    def search_for_film(self, search_target, is_film_exists=True):
+        ip = self.internal_page
+
+        ip.is_this_page
+
+        random_film = ip.movies_searcher[0]
+
+        current_search_field = ip.search_field
+
+        current_search_field.click()
+        current_search_field.clear()
+        current_search_field.send_keys(search_target)
+        current_search_field.send_keys(Keys.ENTER)
+
+        if is_film_exists:
+
+            self.wait.until(staleness_of(random_film))
+
+            ip.is_element_visible((By.CLASS_NAME, "title"))
+
+        else:
+            ip.is_element_visible((By.XPATH, "//*[contains(text(), 'No movies where found')]"))
+
+
+    def list_of_film_treatment(self, list_of_films, search_target, is_film_exists=True):
+        if is_film_exists:
+
+            if len(list_of_films) == 0:
+                raise Exception("Film was not found")
+
+            for film in list_of_films:
+
+                if film.get_attribute("textContent") == search_target:
+                    print "We have found film with title: ", film.get_attribute("textContent")
+                    break
+
+        else:
+            if len(list_of_films) > 0:
+                for film in list_of_films:
+
+                    if film.get_attribute("textContent") == search_target:
+                        print "We have found film with title: ", film.get_attribute("textContent")
+                        raise Exception("We have found not existed film")
+
 
 
 

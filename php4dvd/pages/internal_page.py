@@ -32,3 +32,7 @@ class InternalPage(Page):
     def home_link(self):
         # return self.driver.find_element((By.LINK_TEXT, "Home"))
         return self.driver.find_element_by_link_text("Home")
+
+    @property
+    def search_field(self):
+        return self.driver.find_element_by_css_selector("input[type=\"text\"]")
